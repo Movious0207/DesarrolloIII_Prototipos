@@ -1037,7 +1037,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1941793120}
-  - component: {fileID: 1941793119}
+  - component: {fileID: 1941793121}
   m_Layer: 0
   m_Name: LevelGenerator
   m_TagString: Untagged
@@ -1045,25 +1045,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1941793119
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1941793118}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 964ccc94ca185a64d85913de7b9fb962, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelGenerator
-  player: {fileID: 707211930}
-  chunkLength: 10
-  chunksAhead: 12
-  levelLength: 80
-  obstaclePrefab: {fileID: 495927141}
-  obstacleChance: 0.55
-  finishPrefab: {fileID: 0}
 --- !u!4 &1941793120
 Transform:
   m_ObjectHideFlags: 0
@@ -1079,6 +1060,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1941793121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1941793118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 964ccc94ca185a64d85913de7b9fb962, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGenerator
+  player: {fileID: 707211930}
+  chunkLength: 10
+  chunksAhead: 12
+  levelLength: 200
+  obstaclePrefab: {fileID: 495927141}
+  obstacleChance: 0.55
+  finishPrefab: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
