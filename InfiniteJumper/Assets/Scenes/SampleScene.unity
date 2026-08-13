@@ -657,7 +657,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e20ad11e685fb1e4b9adda74831c255a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  jumpForce: 5
+  jumpForce: 8
+  isGrounded: 0
+  dashDistance: 3
+  dashSpeed: 20
+  returnSpeed: 7
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
