@@ -3,15 +3,19 @@ using UnityEngine;
 
 public class PlayerActions : MonoBehaviour
 {
-    [Header("Dash")]
     private Rigidbody2D rb;
 
     [SerializeField] private float jumpForce = 5f;
     [SerializeField] private bool isGrounded;
 
+
     [SerializeField] private int maxJumps = 2;
     private int jumpsRemaining;
 
+    [Header("Speed")]
+    [SerializeField] private int speed = 10;
+
+    [Header("Dash")]
     [SerializeField] private float dashDistance = 3f;
     [SerializeField] private float dashSpeed = 8f;
     [SerializeField] private float returnSpeed = 5f;
@@ -24,7 +28,6 @@ public class PlayerActions : MonoBehaviour
     private Vector2 tamanoOriginalCollider;
     private Vector2 offsetOriginalCollider;
 
-    private Rigidbody2D rb;
 
     void Start()
     {
@@ -41,6 +44,8 @@ public class PlayerActions : MonoBehaviour
 
     void Update()
     {
+        transform.Translate(new Vector3(1 * speed * Time.deltaTime, 0, 0));
+
         if (isDashing) return;
 
         // --- LÓGICA DE AGACHARSE ---
