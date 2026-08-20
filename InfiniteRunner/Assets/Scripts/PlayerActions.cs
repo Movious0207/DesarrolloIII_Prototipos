@@ -18,7 +18,6 @@ public class PlayerActions : MonoBehaviour
     [Header("Dash")]
     [SerializeField] private float dashDistance = 3f;
     [SerializeField] private float dashSpeed = 8f;
-    [SerializeField] private float returnSpeed = 5f;
     private bool isDashing = false;
 
     [Header("Agachado (Crouch)")]
@@ -106,29 +105,19 @@ public class PlayerActions : MonoBehaviour
     {
         isDashing = true;
 
-        Vector2 posicionOriginal = transform.position;
-        Vector2 posicionDestino = posicionOriginal + new Vector2(dashDistance, 0f);
+        Vector2 posicionDestino = (Vector2)transform.position + new Vector2(dashDistance, 0f);
 
         float gravedadOriginal = rb.gravityScale;
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
 
         // FASE 1: Moverse hacia la derecha (Destino)
-        while (Vector2.Distance(transform.position, posicionDestino) > 0.05f)
+        while (Vector2.SqrMagnitude((Vector2) transform.position - posicionDestino ) > 0.05f)
         {
             transform.position = Vector2.MoveTowards(transform.position, posicionDestino, dashSpeed * Time.deltaTime);
             yield return null;
         }
         transform.position = posicionDestino;
-
-        // FASE 2: Regresar a la posición original
-        while (Vector2.Distance(transform.position, posicionOriginal) > 0.05f)
-        {
-            transform.position = Vector2.MoveTowards(transform.position, posicionOriginal, returnSpeed * Time.deltaTime);
-            yield return null;
-        }
-        transform.position = posicionOriginal;
-
         rb.gravityScale = gravedadOriginal;
         isDashing = false;
     }
