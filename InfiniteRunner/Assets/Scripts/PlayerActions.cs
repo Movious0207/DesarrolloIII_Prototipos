@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class PlayerActions : MonoBehaviour
 {
+    [Header("Dash")]
     private Rigidbody2D rb;
 
     [SerializeField] private float jumpForce = 5f;
@@ -16,11 +17,25 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] private float returnSpeed = 5f;
     private bool isDashing = false;
 
+    [Header("Agachado (Crouch)")]
+    [SerializeField] private float multiplicadorAlturaCollider = 0.5f;
     private bool isCrouching = false;
+    private BoxCollider2D boxCollider;
+    private Vector2 tamanoOriginalCollider;
+    private Vector2 offsetOriginalCollider;
+
+    private Rigidbody2D rb;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        boxCollider = GetComponent<BoxCollider2D>();
+
+        if (boxCollider != null)
+        {
+            tamanoOriginalCollider = boxCollider.size;
+            offsetOriginalCollider = boxCollider.offset;
+        }
         jumpsRemaining = maxJumps;
     }
 
@@ -28,6 +43,17 @@ public class PlayerActions : MonoBehaviour
     {
         if (isDashing) return;
 
+        // --- LÓGICA DE AGACHARSE ---
+        if (Input.GetKeyDown(KeyCode.S) && isGrounded)
+        {
+            Agacharse();
+        }
+        else if (Input.GetKeyUp(KeyCode.S) && isCrouching)
+        {
+            Levantarse();
+        }
+
+        // --- SALTO (No se permite si está agachado) --
         if (Input.GetKeyDown(KeyCode.Space) && jumpsRemaining > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
@@ -37,9 +63,37 @@ public class PlayerActions : MonoBehaviour
             isGrounded = false;
         }
 
+        // --- DASH (No se permite si está agachado) ---
         if (Input.GetKeyDown(KeyCode.D) && isGrounded && !isCrouching)
         {
             StartCoroutine(DashRoutine());
+        }
+    }
+
+    private void Agacharse()
+    {
+        isCrouching = true;
+
+        if (boxCollider != null)
+        {
+            // Reduce la altura del collider
+            boxCollider.size = new Vector2(tamanoOriginalCollider.x, tamanoOriginalCollider.y * multiplicadorAlturaCollider);
+
+            // Reajusta el offset para compensar la reducción desde el centro hacia la base
+            float reduccion = tamanoOriginalCollider.y * (1f - multiplicadorAlturaCollider);
+            boxCollider.offset = new Vector2(offsetOriginalCollider.x, offsetOriginalCollider.y - (reduccion / 2f));
+        }
+    }
+
+    private void Levantarse()
+    {
+        isCrouching = false;
+
+        if (boxCollider != null)
+        {
+            // Restaura las dimensiones y el offset original
+            boxCollider.size = tamanoOriginalCollider;
+            boxCollider.offset = offsetOriginalCollider;
         }
     }
 
@@ -54,26 +108,22 @@ public class PlayerActions : MonoBehaviour
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
 
-        // 2. FASE 1: Moverse hacia la derecha (Destino)
+        // FASE 1: Moverse hacia la derecha (Destino)
         while (Vector2.Distance(transform.position, posicionDestino) > 0.05f)
         {
             transform.position = Vector2.MoveTowards(transform.position, posicionDestino, dashSpeed * Time.deltaTime);
-            yield return null; // Espera al siguiente frame
+            yield return null;
         }
-        transform.position = posicionDestino; // Aseguramos posición exacta al llegar
+        transform.position = posicionDestino;
 
-        // Opcional: Puedes meter un minúsculo tiempo de espera aquí si quieres que se quede quieto un instante
-        // yield return new WaitForSeconds(0.05f);
-
-        // 3. FASE 2: Regresar a la posición original
+        // FASE 2: Regresar a la posición original
         while (Vector2.Distance(transform.position, posicionOriginal) > 0.05f)
         {
             transform.position = Vector2.MoveTowards(transform.position, posicionOriginal, returnSpeed * Time.deltaTime);
             yield return null;
         }
-        transform.position = posicionOriginal; // Aseguramos posición exacta al regresar
+        transform.position = posicionOriginal;
 
-        // 4. Restauramos el estado normal del personaje
         rb.gravityScale = gravedadOriginal;
         isDashing = false;
     }
@@ -93,6 +143,12 @@ public class PlayerActions : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = false;
+
+            // Si el personaje cae por una plataforma mientras estaba agachado, se restaura su collider
+            if (isCrouching)
+            {
+                Levantarse();
+            }
         }
     }
 }
