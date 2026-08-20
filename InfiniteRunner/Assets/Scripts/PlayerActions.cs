@@ -14,6 +14,7 @@ public class PlayerActions : MonoBehaviour
 
     [Header("Speed")]
     [SerializeField] private int speed = 10;
+    private float currentSpeed;
 
     [Header("Dash")]
     [SerializeField] private float dashDistance = 3f;
@@ -42,11 +43,12 @@ public class PlayerActions : MonoBehaviour
             offsetOriginalCollider = boxCollider.offset;
         }
         jumpsRemaining = maxJumps;
+        currentSpeed = speed;
     }
 
     void Update()
     {
-        transform.Translate(new Vector3(1 * speed * Time.deltaTime, 0, 0));
+        transform.Translate(new Vector3(1 * currentSpeed * Time.deltaTime, 0, 0));
 
         if (isDashing) return;
 
@@ -83,6 +85,10 @@ public class PlayerActions : MonoBehaviour
         {
             canDash = true;
         }
+
+
+        if (currentSpeed < speed)
+            currentSpeed += 0.1f;
     }
 
     private void Agacharse()
@@ -142,6 +148,11 @@ public class PlayerActions : MonoBehaviour
         {
             isGrounded = true;
             jumpsRemaining = maxJumps;
+        }
+
+        if(collision.gameObject.CompareTag("Obstacle"))
+        {
+            currentSpeed *= -1;
         }
     }
 
