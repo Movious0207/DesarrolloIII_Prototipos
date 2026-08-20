@@ -3,12 +3,16 @@ using UnityEngine;
 
 public class PlayerActions : MonoBehaviour
 {
-    [SerializeField] private float jumpForce = 5f;
     private Rigidbody2D rb;
+
+    [SerializeField] private float jumpForce = 5f;
     [SerializeField] private bool isGrounded;
 
-    [SerializeField] private float dashDistance = 3f;     
-    [SerializeField] private float dashSpeed = 8f;     
+    [SerializeField] private int maxJumps = 2;
+    private int jumpsRemaining;
+
+    [SerializeField] private float dashDistance = 3f;
+    [SerializeField] private float dashSpeed = 8f;
     [SerializeField] private float returnSpeed = 5f;
     private bool isDashing = false;
 
@@ -17,17 +21,19 @@ public class PlayerActions : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
+        jumpsRemaining = maxJumps;
     }
 
     void Update()
     {
         if (isDashing) return;
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && jumpsRemaining > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+            jumpsRemaining--;
             isGrounded = false;
         }
 
@@ -78,6 +84,7 @@ public class PlayerActions : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = true;
+            jumpsRemaining = maxJumps;
         }
     }
 
