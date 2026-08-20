@@ -18,6 +18,9 @@ public class PlayerActions : MonoBehaviour
     [Header("Dash")]
     [SerializeField] private float dashDistance = 3f;
     [SerializeField] private float dashSpeed = 8f;
+    [SerializeField] private float dashCooldown = 2.0f;
+    private bool canDash = true;
+    private float dashTimer = 0f;
     private bool isDashing = false;
 
     [Header("Agachado (Crouch)")]
@@ -68,9 +71,17 @@ public class PlayerActions : MonoBehaviour
         }
 
         // --- DASH (No se permite si está agachado) ---
-        if (Input.GetKeyDown(KeyCode.D) && isGrounded && !isCrouching)
+        if (Input.GetKeyDown(KeyCode.D) && !isCrouching && canDash)
         {
             StartCoroutine(DashRoutine());
+        }
+        if (!canDash)
+        {
+            dashTimer -= Time.deltaTime;
+        }
+        if (dashTimer < 0 && !canDash && isGrounded)
+        {
+            canDash = true;
         }
     }
 
@@ -120,6 +131,8 @@ public class PlayerActions : MonoBehaviour
         transform.position = posicionDestino;
         rb.gravityScale = gravedadOriginal;
         isDashing = false;
+        canDash = false;
+        dashTimer = dashCooldown;
     }
 
     // --- DETECCIÓN DE SUELO ---
