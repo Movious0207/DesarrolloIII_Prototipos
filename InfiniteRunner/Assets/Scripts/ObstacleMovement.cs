@@ -39,7 +39,7 @@ public class PlataformaRunner2D : MonoBehaviour
     void Reposicionar()
     {
         Vector3 nuevaPosicion = transform.position;
-        nuevaPosicion.x = otraPlataforma.position.x + anchoPlataforma + 10f;
+        nuevaPosicion.x = anchoPlataforma + 10f;
 
         transform.position = nuevaPosicion;
     }
