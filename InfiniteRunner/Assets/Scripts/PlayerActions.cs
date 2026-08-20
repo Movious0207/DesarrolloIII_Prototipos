@@ -3,11 +3,15 @@ using UnityEngine;
 
 public class PlayerActions : MonoBehaviour
 {
-    [Header("Salto")]
+    [Header("Dash")]
+    private Rigidbody2D rb;
+
     [SerializeField] private float jumpForce = 5f;
     [SerializeField] private bool isGrounded;
 
-    [Header("Dash")]
+    [SerializeField] private int maxJumps = 2;
+    private int jumpsRemaining;
+
     [SerializeField] private float dashDistance = 3f;
     [SerializeField] private float dashSpeed = 8f;
     [SerializeField] private float returnSpeed = 5f;
@@ -32,6 +36,7 @@ public class PlayerActions : MonoBehaviour
             tamanoOriginalCollider = boxCollider.size;
             offsetOriginalCollider = boxCollider.offset;
         }
+        jumpsRemaining = maxJumps;
     }
 
     void Update()
@@ -48,11 +53,13 @@ public class PlayerActions : MonoBehaviour
             Levantarse();
         }
 
-        // --- SALTO (No se permite si está agachado) ---
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isCrouching)
+        // --- SALTO (No se permite si está agachado) --
+        if (Input.GetKeyDown(KeyCode.Space) && jumpsRemaining > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+            jumpsRemaining--;
             isGrounded = false;
         }
 
@@ -127,6 +134,7 @@ public class PlayerActions : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = true;
+            jumpsRemaining = maxJumps;
         }
     }
 
