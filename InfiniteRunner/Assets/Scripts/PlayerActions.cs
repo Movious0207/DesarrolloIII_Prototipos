@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerActions : MonoBehaviour
 {
@@ -37,6 +38,10 @@ public class PlayerActions : MonoBehaviour
     private Vector2 tamanoOriginalCollider;
     private Vector2 offsetOriginalCollider;
 
+    private KeyCode jumpKey = KeyCode.Space;
+    private KeyCode dashKey = KeyCode.D;
+    private KeyCode crouchKey = KeyCode.S;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -56,13 +61,12 @@ public class PlayerActions : MonoBehaviour
         transform.Translate(new Vector3(1 * currentSpeed * Time.deltaTime, 0, 0));
 
         if (isDashing) return;
-
-        // --- LÓGICA DE AGACHARSE Y LEVANTARSE ---
-        if (Input.GetKeyDown(KeyCode.S) && isGrounded)
+        // --- LÓGICA DE AGACHARSE ---
+        if (Input.GetKeyDown(crouchKey) && isGrounded)
         {
             Agacharse();
         }
-        else if (Input.GetKeyUp(KeyCode.S) && isCrouching)
+        else if (Input.GetKeyUp(crouchKey) && isCrouching)
         {
             wantsToStandUp = true;
         }
@@ -72,8 +76,9 @@ public class PlayerActions : MonoBehaviour
             TratardeLevantarse();
         }
 
-        // --- SALTO ---
-        if (Input.GetKeyDown(KeyCode.Space) && jumpsRemaining > 0 && !isCrouching)
+        // --- SALTO (No se permite si está agachado) --
+        if (Input.GetKeyDown(jumpKey) && jumpsRemaining > 0)
+
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
@@ -82,8 +87,8 @@ public class PlayerActions : MonoBehaviour
             isGrounded = false;
         }
 
-        // --- DASH CON DETECCIÓN DE OBSTÁCULOS ---
-        if (Input.GetKeyDown(KeyCode.D) && !isCrouching && canDash)
+        // --- DASH (No se permite si está agachado) ---
+        if (Input.GetKeyDown(dashKey) && !isCrouching && canDash)
         {
             StartCoroutine(DashRoutine());
         }
@@ -221,6 +226,8 @@ public class PlayerActions : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
+
     private void OnDrawGizmosSelected()
     {
         if (boxCollider == null) return;
@@ -239,5 +246,20 @@ public class PlayerActions : MonoBehaviour
         Gizmos.color = Color.cyan;
         Vector2 origenDash = (Vector2)transform.position + boxCollider.offset;
         Gizmos.DrawRay(origenDash, new Vector2(direccion * dashDistance, 0f));
+    }
+#endif
+    public KeyCode GetJumpKey()
+    {
+        return jumpKey;
+    }
+
+    public KeyCode GetDashKey()
+    {
+        return dashKey;
+    }
+
+    public KeyCode GetCrouchKey()
+    {
+        return crouchKey;
     }
 }
