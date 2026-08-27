@@ -19,18 +19,20 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] private float dashDistance = 3f;
     [SerializeField] private float dashSpeed = 8f;
     [SerializeField] private float dashCooldown = 2.0f;
+    [SerializeField] private LayerMask dashObstacleLayer; // Capa de los obstáculos que bloquean el Dash
+    [SerializeField] private float margenPared = 1f; // Distancia de seguridad para no quedar pegado dentro de la pared
     private bool canDash = true;
     private float dashTimer = 0f;
     private bool isDashing = false;
 
     [Header("Agachado (Crouch)")]
     [SerializeField] private float multiplicadorAlturaCollider = 0.5f;
-    [SerializeField] private LayerMask techoLayer; // Asigna aquí la capa de los obstáculos/techos
-    [SerializeField] private float margenPosterior = 1f; // Extensión extra hacia atrás
-    [SerializeField] private float margenAncho = 1f; // Extensión extra de ancho general
+    [SerializeField] private LayerMask techoLayer;
+    [SerializeField] private float margenPosterior = 1f;
+    [SerializeField] private float margenAncho = 1f;
 
     private bool isCrouching = false;
-    private bool wantsToStandUp = false; // Controla si el jugador soltó la tecla S
+    private bool wantsToStandUp = false;
     private BoxCollider2D boxCollider;
     private Vector2 tamanoOriginalCollider;
     private Vector2 offsetOriginalCollider;
@@ -65,13 +67,12 @@ public class PlayerActions : MonoBehaviour
             wantsToStandUp = true;
         }
 
-        // Intenta levantarse frame a frame si el jugador soltó S pero había un techo encima
         if (wantsToStandUp && isCrouching)
         {
             TratardeLevantarse();
         }
 
-        // --- SALTO (No se permite si está agachado) ---
+        // --- SALTO ---
         if (Input.GetKeyDown(KeyCode.Space) && jumpsRemaining > 0 && !isCrouching)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
@@ -81,7 +82,7 @@ public class PlayerActions : MonoBehaviour
             isGrounded = false;
         }
 
-        // --- DASH (No se permite si está agachado) ---
+        // --- DASH CON DETECCIÓN DE OBSTÁCULOS ---
         if (Input.GetKeyDown(KeyCode.D) && !isCrouching && canDash)
         {
             StartCoroutine(DashRoutine());
@@ -106,10 +107,7 @@ public class PlayerActions : MonoBehaviour
 
         if (boxCollider != null)
         {
-            // Reduce la altura del collider
             boxCollider.size = new Vector2(tamanoOriginalCollider.x, tamanoOriginalCollider.y * multiplicadorAlturaCollider);
-
-            // Reajusta el offset para compensar la reducción desde el centro hacia la base
             float reduccion = tamanoOriginalCollider.y * (1f - multiplicadorAlturaCollider);
             boxCollider.offset = new Vector2(offsetOriginalCollider.x, offsetOriginalCollider.y - (reduccion / 2f));
         }
@@ -117,7 +115,6 @@ public class PlayerActions : MonoBehaviour
 
     private void TratardeLevantarse()
     {
-        // Si no hay obstáculo arriba, se levanta por completo
         if (!HayTechoEncima())
         {
             isCrouching = false;
@@ -125,7 +122,6 @@ public class PlayerActions : MonoBehaviour
 
             if (boxCollider != null)
             {
-                // Restaura las dimensiones y el offset original
                 boxCollider.size = tamanoOriginalCollider;
                 boxCollider.offset = offsetOriginalCollider;
             }
@@ -136,19 +132,12 @@ public class PlayerActions : MonoBehaviour
     {
         if (boxCollider == null) return false;
 
-        // Calculamos el centro de la caja de verificación al estar de pie
         Vector2 centroDePie = (Vector2)transform.position + offsetOriginalCollider;
-
-        // Determinamos la dirección del movimiento (1 si va a la derecha, -1 si va a la izquierda)
         float direccion = Mathf.Sign(currentSpeed);
 
-        // Desplazamos la caja hacia ATRÁS según la dirección en que avanza el jugador
         centroDePie.x -= (direccion * margenPosterior / 2f);
-
-        // Definimos el tamaño del área de verificación ampliando los márgenes
         Vector2 tamanoDePie = new Vector2(tamanoOriginalCollider.x + margenPosterior + margenAncho, tamanoOriginalCollider.y);
 
-        // Comprobamos la zona ampliada mediante OverlapBox
         Collider2D solape = Physics2D.OverlapBox(centroDePie, tamanoDePie, 0f, techoLayer);
 
         return solape != null;
@@ -158,18 +147,39 @@ public class PlayerActions : MonoBehaviour
     {
         isDashing = true;
 
-        Vector2 posicionDestino = (Vector2)transform.position + new Vector2(dashDistance, 0f);
+        // 1. Determinar dirección del Dash según hacia dónde avanza el personaje
+        float direccionX = Mathf.Sign(currentSpeed);
+        Vector2 direccionDash = new Vector2(direccionX, 0f);
+
+        // 2. Calcular la posición deseada
+        float distanciaEfectiva = dashDistance;
+
+        // 3. Lanzar un Raycast/BoxCast frontal para verificar si hay obstáculos en el trayecto
+        Vector2 origenCast = (Vector2)transform.position + boxCollider.offset;
+        Vector2 tamanoCaja = new Vector2(0.05f, boxCollider.size.y * 0.9f);
+
+        RaycastHit2D hit = Physics2D.BoxCast(origenCast, tamanoCaja, 0f, direccionDash, dashDistance, dashObstacleLayer);
+
+        // Si hay un obstáculo, acortamos el Dash para frenar antes de tocarlo
+        if (hit.collider != null)
+        {
+            distanciaEfectiva = hit.distance - margenPared;
+            if (distanciaEfectiva < 0) distanciaEfectiva = 0; // Evita valores negativos si ya está pegado
+        }
+
+        Vector2 posicionDestino = (Vector2)transform.position + new Vector2(direccionX * distanciaEfectiva, 0f);
 
         float gravedadOriginal = rb.gravityScale;
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
 
-        // FASE 1: Moverse hacia la derecha (Destino)
-        while (Vector2.SqrMagnitude((Vector2)transform.position - posicionDestino) > 0.05f)
+        // 4. Ejecutar el movimiento
+        while (Vector2.SqrMagnitude((Vector2)transform.position - posicionDestino) > 0.02f)
         {
             transform.position = Vector2.MoveTowards(transform.position, posicionDestino, dashSpeed * Time.deltaTime);
             yield return null;
         }
+
         transform.position = posicionDestino;
         rb.gravityScale = gravedadOriginal;
         isDashing = false;
@@ -177,7 +187,6 @@ public class PlayerActions : MonoBehaviour
         dashTimer = dashCooldown;
     }
 
-    // --- DETECCIÓN DE SUELO ---
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Floor"))
@@ -198,7 +207,6 @@ public class PlayerActions : MonoBehaviour
         {
             isGrounded = false;
 
-            // Si el personaje cae por una plataforma mientras estaba agachado y ya no hay techo
             if (isCrouching && !HayTechoEncima())
             {
                 isCrouching = false;
@@ -213,11 +221,11 @@ public class PlayerActions : MonoBehaviour
         }
     }
 
-    // Muestra la caja de comprobación física en el editor de Unity
     private void OnDrawGizmosSelected()
     {
         if (boxCollider == null) return;
 
+        // Visualización del techo
         Vector2 centroDePie = (Vector2)transform.position + offsetOriginalCollider;
         float direccion = Application.isPlaying ? Mathf.Sign(currentSpeed) : 1f;
 
@@ -226,5 +234,10 @@ public class PlayerActions : MonoBehaviour
 
         Gizmos.color = Color.magenta;
         Gizmos.DrawWireCube(centroDePie, tamanoDePie);
+
+        // Visualización del Dash Raycast
+        Gizmos.color = Color.cyan;
+        Vector2 origenDash = (Vector2)transform.position + boxCollider.offset;
+        Gizmos.DrawRay(origenDash, new Vector2(direccion * dashDistance, 0f));
     }
 }

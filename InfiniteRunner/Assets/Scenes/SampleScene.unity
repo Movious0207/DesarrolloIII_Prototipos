@@ -1931,6 +1931,10 @@ MonoBehaviour:
   dashDistance: 3
   dashSpeed: 20
   dashCooldown: 2
+  dashObstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  margenPared: 1
   multiplicadorAlturaCollider: 0.5
   techoLayer:
     serializedVersion: 2
