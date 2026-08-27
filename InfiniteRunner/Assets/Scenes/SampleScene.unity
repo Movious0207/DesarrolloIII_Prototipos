@@ -1247,7 +1247,7 @@ GameObject:
   - component: {fileID: 849647383}
   - component: {fileID: 849647382}
   - component: {fileID: 849647381}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Obstacle
   m_TagString: Obstacle
   m_Icon: {fileID: 0}
@@ -1932,6 +1932,11 @@ MonoBehaviour:
   dashSpeed: 20
   dashCooldown: 2
   multiplicadorAlturaCollider: 0.5
+  techoLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  margenPosterior: 1
+  margenAncho: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
