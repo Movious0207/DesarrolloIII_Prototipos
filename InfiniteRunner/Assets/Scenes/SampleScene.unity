@@ -1360,7 +1360,7 @@ GameObject:
   - component: {fileID: 822276974}
   m_Layer: 0
   m_Name: Tilemap
-  m_TagString: Untagged
+  m_TagString: Floor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3365,7 +3365,7 @@ MonoBehaviour:
   speed: 10
   dashDistance: 3
   dashSpeed: 20
-  dashCooldown: 2
+  dashCooldown: 0.5
   dashObstacleLayer:
     serializedVersion: 2
     m_Bits: 64
