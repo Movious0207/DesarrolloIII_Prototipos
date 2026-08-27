@@ -1,6 +1,7 @@
+using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 public class PlayerActions : MonoBehaviour
 {
@@ -32,6 +33,9 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] private float margenPosterior = 1f;
     [SerializeField] private float margenAncho = 1f;
 
+    [Header("Key change timer")]
+    [SerializeField] private float keyTimer = 3.0f;
+
     private bool isCrouching = false;
     private bool wantsToStandUp = false;
     private BoxCollider2D boxCollider;
@@ -41,6 +45,8 @@ public class PlayerActions : MonoBehaviour
     private KeyCode jumpKey = KeyCode.Space;
     private KeyCode dashKey = KeyCode.D;
     private KeyCode crouchKey = KeyCode.S;
+
+    private float currentKeyTimer = 0.0f;
 
     void Start()
     {
@@ -52,8 +58,11 @@ public class PlayerActions : MonoBehaviour
             tamanoOriginalCollider = boxCollider.size;
             offsetOriginalCollider = boxCollider.offset;
         }
+
         jumpsRemaining = maxJumps;
+
         currentSpeed = speed;
+        currentKeyTimer = keyTimer;
     }
 
     void Update()
@@ -101,8 +110,58 @@ public class PlayerActions : MonoBehaviour
             canDash = true;
         }
 
+        if (currentKeyTimer <= 0.0f)
+        {
+            SetRandKey();
+
+            currentKeyTimer += keyTimer;
+        }
+
         if (currentSpeed < speed)
             currentSpeed += 0.1f;
+
+        currentKeyTimer -= Time.deltaTime;
+    }
+
+    private KeyCode GetRandKey()
+    {
+        return (KeyCode)UnityEngine.Random.Range((int)KeyCode.A, (int)KeyCode.Z + 1); ;
+    }
+
+    private void SetRandKey()
+    {
+        int randNum = UnityEngine.Random.Range(0, 3);
+
+        KeyCode prevKey = jumpKey;
+
+        switch (randNum)
+        {
+            case 0:
+                do
+                {
+                    jumpKey = GetRandKey();
+                }
+                while (jumpKey == crouchKey || jumpKey == dashKey || jumpKey == prevKey);
+                break;
+
+            case 1:
+                prevKey = dashKey;
+                do
+                {
+                    dashKey = GetRandKey();
+                }
+                while (dashKey == crouchKey || jumpKey == dashKey || dashKey == prevKey);
+                break;
+
+            case 2:
+                prevKey = crouchKey;
+                do
+                {
+                    crouchKey = GetRandKey();
+                }
+                while (dashKey == crouchKey || jumpKey == crouchKey || crouchKey == prevKey);
+                break;
+        }
     }
 
     private void Agacharse()
