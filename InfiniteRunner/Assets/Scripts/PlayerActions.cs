@@ -36,13 +36,30 @@ public class PlayerActions : MonoBehaviour
     [Header("Key change timer")]
     [SerializeField] private float keyTimer = 3.0f;
 
+    // --- NUEVOS ARRAYS FILAS QWERTY ---
+    private readonly KeyCode[] filaSuperior = {
+        KeyCode.Q, KeyCode.W, KeyCode.E, KeyCode.R, KeyCode.T,
+        KeyCode.Y, KeyCode.U, KeyCode.I, KeyCode.O, KeyCode.P
+    };
+
+    private readonly KeyCode[] filaMedia = {
+        KeyCode.A, KeyCode.S, KeyCode.D, KeyCode.F, KeyCode.G,
+        KeyCode.H, KeyCode.J, KeyCode.K, KeyCode.L
+    };
+
+    private readonly KeyCode[] filaInferior = {
+        KeyCode.Z, KeyCode.X, KeyCode.C, KeyCode.V,
+        KeyCode.B, KeyCode.N, KeyCode.M
+    };
+
     private bool isCrouching = false;
     private bool wantsToStandUp = false;
     private BoxCollider2D boxCollider;
     private Vector2 tamanoOriginalCollider;
     private Vector2 offsetOriginalCollider;
 
-    private KeyCode jumpKey = KeyCode.Space;
+    // Teclas iniciales asignadas según su respectiva fila
+    private KeyCode jumpKey = KeyCode.Space; // Cambiará a la fila superior al iniciar/restablecer
     private KeyCode dashKey = KeyCode.D;
     private KeyCode crouchKey = KeyCode.S;
 
@@ -63,6 +80,9 @@ public class PlayerActions : MonoBehaviour
 
         currentSpeed = speed;
         currentKeyTimer = keyTimer;
+
+        // Forzar una asignación inicial correcta al empezar el juego
+        SetRandKey();
     }
 
     void Update()
@@ -87,7 +107,6 @@ public class PlayerActions : MonoBehaviour
 
         // --- SALTO (No se permite si está agachado) --
         if (Input.GetKeyDown(jumpKey) && jumpsRemaining > 0)
-
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
@@ -123,43 +142,45 @@ public class PlayerActions : MonoBehaviour
         currentKeyTimer -= Time.deltaTime;
     }
 
-    private KeyCode GetRandKey()
+    // Método modificado para elegir una tecla aleatoria de un array específico
+    private KeyCode GetRandKeyFromRow(KeyCode[] fila)
     {
-        return (KeyCode)UnityEngine.Random.Range((int)KeyCode.A, (int)KeyCode.Z + 1); ;
+        int randomIndex = UnityEngine.Random.Range(0, fila.Length);
+        return fila[randomIndex];
     }
 
     private void SetRandKey()
     {
         int randNum = UnityEngine.Random.Range(0, 3);
 
-        KeyCode prevKey = jumpKey;
-
         switch (randNum)
         {
-            case 0:
+            case 0: // JUMP -> Fila Superior
+                KeyCode prevJump = jumpKey;
                 do
                 {
-                    jumpKey = GetRandKey();
+                    jumpKey = GetRandKeyFromRow(filaSuperior);
                 }
-                while (jumpKey == crouchKey || jumpKey == dashKey || jumpKey == prevKey);
+                // Evitamos que se repita la misma tecla de salto anterior
+                while (jumpKey == prevJump);
                 break;
 
-            case 1:
-                prevKey = dashKey;
+            case 1: // DASH -> Fila Media
+                KeyCode prevDash = dashKey;
                 do
                 {
-                    dashKey = GetRandKey();
+                    dashKey = GetRandKeyFromRow(filaMedia);
                 }
-                while (dashKey == crouchKey || jumpKey == dashKey || dashKey == prevKey);
+                while (dashKey == prevDash);
                 break;
 
-            case 2:
-                prevKey = crouchKey;
+            case 2: // CROUCH -> Fila Inferior
+                KeyCode prevCrouch = crouchKey;
                 do
                 {
-                    crouchKey = GetRandKey();
+                    crouchKey = GetRandKeyFromRow(filaInferior);
                 }
-                while (dashKey == crouchKey || jumpKey == crouchKey || crouchKey == prevKey);
+                while (crouchKey == prevCrouch);
                 break;
         }
     }
@@ -211,24 +232,20 @@ public class PlayerActions : MonoBehaviour
     {
         isDashing = true;
 
-        // 1. Determinar dirección del Dash según hacia dónde avanza el personaje
         float direccionX = Mathf.Sign(currentSpeed);
         Vector2 direccionDash = new Vector2(direccionX, 0f);
 
-        // 2. Calcular la posición deseada
         float distanciaEfectiva = dashDistance;
 
-        // 3. Lanzar un Raycast/BoxCast frontal para verificar si hay obstáculos en el trayecto
         Vector2 origenCast = (Vector2)transform.position + boxCollider.offset;
         Vector2 tamanoCaja = new Vector2(0.05f, boxCollider.size.y * 0.9f);
 
         RaycastHit2D hit = Physics2D.BoxCast(origenCast, tamanoCaja, 0f, direccionDash, dashDistance, dashObstacleLayer);
 
-        // Si hay un obstáculo, acortamos el Dash para frenar antes de tocarlo
         if (hit.collider != null)
         {
             distanciaEfectiva = hit.distance - margenPared;
-            if (distanciaEfectiva < 0) distanciaEfectiva = 0; // Evita valores negativos si ya está pegado
+            if (distanciaEfectiva < 0) distanciaEfectiva = 0;
         }
 
         Vector2 posicionDestino = (Vector2)transform.position + new Vector2(direccionX * distanciaEfectiva, 0f);
@@ -237,7 +254,6 @@ public class PlayerActions : MonoBehaviour
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
 
-        // 4. Ejecutar el movimiento
         while (Vector2.SqrMagnitude((Vector2)transform.position - posicionDestino) > 0.02f)
         {
             transform.position = Vector2.MoveTowards(transform.position, posicionDestino, dashSpeed * Time.deltaTime);
@@ -250,7 +266,6 @@ public class PlayerActions : MonoBehaviour
         canDash = false;
         dashTimer = dashCooldown;
     }
-
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Floor"))
