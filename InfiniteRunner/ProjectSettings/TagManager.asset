@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Floor
   - Obstacle
+  - Start
   layers:
   - Default
   - TransparentFX

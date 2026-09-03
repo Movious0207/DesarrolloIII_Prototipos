@@ -13,6 +13,12 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] private int maxJumps = 2;
     private int jumpsRemaining;
 
+    [Header("Start")]
+    [SerializeField] private GameObject startPoint;
+
+    [Header("Finish")]
+    [SerializeField] private GameObject endPoint;
+
     [Header("Speed")]
     [SerializeField] private int speed = 10;
     private float currentSpeed;
@@ -59,14 +65,18 @@ public class PlayerActions : MonoBehaviour
     private Vector2 offsetOriginalCollider;
 
     // Teclas iniciales asignadas según su respectiva fila
-    private KeyCode jumpKey = KeyCode.Space; // Cambiará a la fila superior al iniciar/restablecer
+    private KeyCode jumpKey = KeyCode.W; // Cambiará a la fila superior al iniciar/restablecer
     private KeyCode dashKey = KeyCode.D;
-    private KeyCode crouchKey = KeyCode.S;
+    private KeyCode crouchKey = KeyCode.Z;
 
     private float currentKeyTimer = 0.0f;
 
+    Vector3 posicionPantalla;
+
     void Start()
     {
+        transform.position = startPoint.transform.position;
+
         rb = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
 
@@ -80,9 +90,6 @@ public class PlayerActions : MonoBehaviour
 
         currentSpeed = speed;
         currentKeyTimer = keyTimer;
-
-        // Forzar una asignación inicial correcta al empezar el juego
-        SetRandKey();
     }
 
     void Update()
@@ -140,6 +147,13 @@ public class PlayerActions : MonoBehaviour
             currentSpeed += 0.1f;
 
         currentKeyTimer -= Time.deltaTime;
+
+        posicionPantalla = Camera.main.WorldToViewportPoint(transform.position);
+
+        if (posicionPantalla.y < 0)
+        {
+            transform.position = startPoint.transform.position;
+        }
     }
 
     // Método modificado para elegir una tecla aleatoria de un array específico
@@ -277,6 +291,11 @@ public class PlayerActions : MonoBehaviour
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             currentSpeed *= -1;
+        }
+
+        if (collision.gameObject.CompareTag("Finish"))
+        {
+            Time.timeScale = 0;
         }
     }
 
